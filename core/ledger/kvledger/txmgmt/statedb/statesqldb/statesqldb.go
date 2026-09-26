@@ -41,6 +41,9 @@ func NewVersionedDBProvider(config *ledger.SqlDbConfig, metricsProvider metrics.
 
 	keyValueDBConn, err := keyvaluedatabase.GetKeyValueDBConnection()
 	if err != nil {
+		if closeErr := sqlClient.Close(); closeErr != nil {
+			logger.Errorf("failed to close SQL DB provider after KeyDB initialization error: %v", closeErr)
+		}
 		return nil, err
 	}
 
