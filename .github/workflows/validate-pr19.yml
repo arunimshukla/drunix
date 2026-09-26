@@ -1,0 +1,33 @@
+name: Validate PR 19 statesqldb fix
+
+on:
+  push:
+    branches:
+      - validate/pr19-close-resources
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Check formatting
+        run: |
+          files=(
+            core/ledger/kvledger/txmgmt/statedb/statesqldb/sql_batcher.go
+            core/ledger/kvledger/txmgmt/statedb/statesqldb/sql_client.go
+            core/ledger/kvledger/txmgmt/statedb/statesqldb/statesqldb.go
+            core/ledger/kvledger/txmgmt/statedb/statesqldb/close_test.go
+          )
+          unformatted="$(gofmt -l "${files[@]}")"
+          test -z "$unformatted" || { echo "$unformatted"; exit 1; }
+      - name: Package tests
+        run: go test ./core/ledger/kvledger/txmgmt/statedb/statesqldb
+      - name: Race tests
+        run: go test -race ./core/ledger/kvledger/txmgmt/statedb/statesqldb
+      - name: Vet package
+        run: go vet ./core/ledger/kvledger/txmgmt/statedb/statesqldb
